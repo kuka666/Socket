@@ -1,0 +1,17 @@
+micronaut:
+  application:
+    name: socket
+  security:
+    enabled: true
+    token:
+      jwt:
+        enabled: true
+        secret: secret
+---
+#tag::db[]
+db:
+  name: "JointPurchase"
+  collection: "products"
+#end::db[]
+mongodb:
+  uri: mongodb+srv://kukakukakuka2017:dbhec123@jointpurchase.trdrebh.mongodb.net/test
