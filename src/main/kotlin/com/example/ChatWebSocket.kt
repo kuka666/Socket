@@ -1,6 +1,8 @@
 package com.example
 
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.gson.Gson
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import io.micronaut.websocket.WebSocketBroadcaster
@@ -32,12 +34,21 @@ class ChatWebSocket(private val broadcaster: WebSocketBroadcaster, private val c
     fun onOpen(id1: String, id2: String, session: WebSocketSession): Publisher<String> {
         log("onOpen", session, id1, id2)
         val name_2 = chatMessageRepository.findById(id1)?.firstName.toString()
-        val message = String.format("[%s] Зашел в чат!", name_2)
+        val message = String.format("")
+//        val messages = chatMessageRepository.findBySenderIdAndReceiverId(id1, id2)
+//
+//        // Send each message to the client
+//        messages.forEach {
+//            session.send(String.format("[%s] %s", name_2, it.message))
+//        }
+
         return broadcaster.broadcast(message, isValid(id1, id2))
     }
 
     @OnMessage
     fun onMessage(id1: String, id2: String, message: String, session: WebSocketSession): Publisher<String> {
+        val mapper = ObjectMapper()
+        val messageObject = mapper.readValue(message, ChatMessageDTO::class.java)
         log("onMessage", session, id1, id2)
         val name_2 = chatMessageRepository.findById(id1)?.firstName.toString()
         val id = ObjectId().toString()
@@ -45,18 +56,22 @@ class ChatWebSocket(private val broadcaster: WebSocketBroadcaster, private val c
             id = id ,
             senderId = id1,
             receiverId = id2,
-            message = message,
-            sentTime = Instant.now()
+            message = messageObject.text,
+            sentTime = Instant.now(),
+            referredMessageId = messageObject.referredMessageId.toString(),
+            referredMessageText = messageObject.referredMessageText.toString()
         )
+        val gson = Gson()
+        val chatMessageJson = gson.toJson(chatMessage)
         chatMessageRepository.save(chatMessage)
-        return broadcaster.broadcast(String.format("[%s] %s", name_2, message), isValid(id1, id2))
+        return broadcaster.broadcast(String.format(chatMessageJson), isValid(id1, id2))
     }
 
     @OnClose
     fun onClose(id1: String, id2: String, session: WebSocketSession): Publisher<String> {
         log("onClose", session, id1, id2)
         val name_2 = chatMessageRepository.findById(id1)?.firstName.toString()
-        return broadcaster.broadcast(String.format("[%s] Leaving chat with %s!", name_2, id2), isValid(id1, id2))
+        return broadcaster.broadcast(String.format(""), isValid(id1, id2))
     }
 
     private fun isValid(id1: String, id2: String): Predicate<WebSocketSession> {

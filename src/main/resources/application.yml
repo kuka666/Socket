@@ -14,4 +14,4 @@ db:
   collection: "products"
 #end::db[]
 mongodb:
-  uri: mongodb+srv://kukakukakuka2017:dbhec123@jointpurchase.trdrebh.mongodb.net/test
+  uri: mongodb+srv://kukakukakuka2017:dbhec123@jointpurchase.gjsuarg.mongodb.net/test
